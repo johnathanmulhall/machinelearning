@@ -1,0 +1,168 @@
+import piplite
+await piplite.install(['pandas'])
+await piplite.install(['matplotlib'])
+await piplite.install(['numpy'])
+await piplite.install(['scikit-learn'])
+await piplite.install(['scipy'])
+
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+#dataviz
+x = np.arange(-5.0, 5.0, 0.1)
+
+##You can adjust the slope and intercept to verify the changes in the graph
+y = 2*(x) + 3
+y_noise = 2 * np.random.normal(size=x.size)
+ydata = y + y_noise
+#plt.figure(figsize=(8,6))
+plt.plot(x, ydata,  'bo')
+plt.plot(x,y, 'r') 
+plt.ylabel('Dependent Variable')
+plt.xlabel('Independent Variable')
+plt.show()
+
+#cubic fx graph:
+x = np.arange(-5.0, 5.0, 0.1)
+
+##You can adjust the slope and intercept to verify the changes in the graph
+y = 1*(x**3) + 1*(x**2) + 1*x + 3
+y_noise = 20 * np.random.normal(size=x.size)
+ydata = y + y_noise
+plt.plot(x, ydata,  'bo')
+plt.plot(x,y, 'r') 
+plt.ylabel('Dependent Variable')
+plt.xlabel('Independent Variable')
+plt.show()
+
+"""
+this fx has x3 and x2 as independent vars, also the raphic is a not straight line over the 2d plane. therefore is non-linear
+"""
+
+#try quadratic
+x = np.arange(-5.0, 5.0, 0.1)
+
+##You can adjust the slope and intercept to verify the changes in the graph
+
+y = np.power(x,2)
+y_noise = 2 * np.random.normal(size=x.size)
+ydata = y + y_noise
+plt.plot(x, ydata,  'bo')
+plt.plot(x,y, 'r') 
+plt.ylabel('Dependent Variable')
+plt.xlabel('Independent Variable')
+plt.show()
+
+#try exponential
+X = np.arange(-5.0, 5.0, 0.1)
+
+##You can adjust the slope and intercept to verify the changes in the graph
+
+Y= np.exp(X)
+
+plt.plot(X,Y) 
+plt.ylabel('Dependent Variable')
+plt.xlabel('Independent Variable')
+plt.show()
+
+#try logarithmic
+X = np.arange(-5.0, 5.0, 0.1)
+
+Y = np.log(X)
+
+plt.plot(X,Y) 
+plt.ylabel('Dependent Variable')
+plt.xlabel('Independent Variable')
+plt.show()
+
+#try sigmoidal/logistic
+X = np.arange(-5.0, 5.0, 0.1)
+
+
+Y = 1-4/(1+np.power(3, X-2))
+
+plt.plot(X,Y) 
+plt.ylabel('Dependent Variable')
+plt.xlabel('Independent Variable')
+plt.show()
+
+"""
+lets try using some imported data and fitting a non-linear model
+"""
+#This function will download the dataset into your browser 
+
+from pyodide.http import pyfetch
+
+async def download(url, filename):
+    response = await pyfetch(url)
+    if response.status == 200:
+        with open(filename, "wb") as f:
+            f.write(await response.bytes())
+            
+#data input
+path='https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-ML0101EN-SkillsNetwork/labs/Module%202/data/china_gdp.csv'
+
+await download(path, "china_gdp.csv")
+
+import numpy as np
+import pandas as pd
+
+  
+df = pd.read_csv("china_gdp.csv")
+df.head(10)
+
+#plot
+plt.figure(figsize=(8,5))
+x_data, y_data = (df["Year"].values, df["Value"].values)
+plt.plot(x_data, y_data, 'ro')
+plt.ylabel('GDP')
+plt.xlabel('Year')
+plt.show()
+
+#choose a model., given the plots from this data, a logistic of form yhat = 1/1+e^[-B_1(X-B_2)] (sigmoid); here B_1 controls curve's steepness, B_2 slides the curve 
+via x-axis
+
+def sigmoid(x, Beta_1, Beta_2):
+     y = 1 / (1 + np.exp(-Beta_1*(x-Beta_2)))
+     return y
+     
+beta_1 = 0.10
+beta_2 = 1990.0
+
+#logistic function
+Y_pred = sigmoid(x_data, beta_1 , beta_2)
+
+#plot initial prediction against datapoints
+plt.plot(x_data, Y_pred*15000000000000.)
+plt.plot(x_data, y_data, 'ro')
+
+#normalize data
+xdata =x_data/max(x_data)
+ydata =y_data/max(y_data)
+
+#best parameters to fit line. in this case, we can use curve_fit
+from scipy.optimize import curve_fit
+popt, pcov = curve_fit(sigmoid, xdata, ydata)
+#print the final parameters
+print(" beta_1 = %f, beta_2 = %f" % (popt[0], popt[1]))
+
+#popt are the optimized parameters
+
+#plot resulting regression model
+x = np.linspace(1960, 2015, 55)
+x = x/max(x)
+plt.figure(figsize=(8,5))
+y = sigmoid(x, *popt)
+plt.plot(xdata, ydata, 'ro', label='data')
+plt.plot(x,y, linewidth=3.0, label='fit')
+plt.legend(loc='best')
+plt.ylabel('GDP')
+plt.xlabel('Year')
+plt.show()
+
+
+
+
+
+
